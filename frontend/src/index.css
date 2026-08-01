@@ -86,6 +86,8 @@
     --viz-budgeted: #2a78d6;
     --viz-spent: #eb6834;
     --viz-critical: #d03b3b;
+    --viz-good: #0ca30c;
+    --viz-neutral: #c3c2b7;
     --viz-gridline: #e1e0d9;
     --viz-axis: #898781;
     --viz-cursor: rgba(11, 11, 11, 0.05);
@@ -128,6 +130,8 @@
     --viz-budgeted: #3987e5;
     --viz-spent: #d95926;
     --viz-critical: #d03b3b;
+    --viz-good: #0ca30c;
+    --viz-neutral: #383835;
     --viz-gridline: #2c2c2a;
     --viz-axis: #898781;
     --viz-cursor: rgba(255, 255, 255, 0.06);

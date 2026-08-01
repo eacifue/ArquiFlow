@@ -6,6 +6,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { EditProjectDialog } from "./EditProjectDialog";
 import { ProjectClientsSection } from "./ProjectClientsSection";
 import { BudgetTab } from "@/features/budget/BudgetTab";
+import { ScheduleTab } from "@/features/schedule/ScheduleTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,11 +70,7 @@ export function ProjectDetailPage() {
           {canManageProject && <TabsTrigger value="client">Cliente</TabsTrigger>}
         </TabsList>
         <TabsContent value="schedule">
-          <Card>
-            <CardContent className="pt-6 text-sm text-muted-foreground">
-              El cronograma de esta obra se implementa en la Fase 3.
-            </CardContent>
-          </Card>
+          <ScheduleTab projectId={project.id} />
         </TabsContent>
         <TabsContent value="budget">
           <BudgetTab projectId={project.id} />
