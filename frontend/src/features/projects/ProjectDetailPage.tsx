@@ -8,8 +8,8 @@ import { ProjectClientsSection } from "./ProjectClientsSection";
 import { BudgetTab } from "@/features/budget/BudgetTab";
 import { ScheduleTab } from "@/features/schedule/ScheduleTab";
 import { SiteLogTab } from "@/features/sitelog/SiteLogTab";
+import { PaymentsTab } from "@/features/payments/PaymentsTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export function ProjectDetailPage() {
@@ -67,7 +67,7 @@ export function ProjectDetailPage() {
           <TabsTrigger value="schedule">Cronograma</TabsTrigger>
           <TabsTrigger value="budget">Presupuesto</TabsTrigger>
           <TabsTrigger value="sitelog">Bitácora</TabsTrigger>
-          <TabsTrigger value="payments">Pagos</TabsTrigger>
+          {canManageProject && <TabsTrigger value="payments">Pagos</TabsTrigger>}
           {canManageProject && <TabsTrigger value="client">Cliente</TabsTrigger>}
         </TabsList>
         <TabsContent value="schedule">
@@ -79,13 +79,11 @@ export function ProjectDetailPage() {
         <TabsContent value="sitelog">
           <SiteLogTab projectId={project.id} />
         </TabsContent>
-        <TabsContent value="payments">
-          <Card>
-            <CardContent className="pt-6 text-sm text-muted-foreground">
-              Los pagos a proveedores se implementan en la Fase 5.
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {canManageProject && (
+          <TabsContent value="payments">
+            <PaymentsTab projectId={project.id} />
+          </TabsContent>
+        )}
         {canManageProject && (
           <TabsContent value="client">
             <ProjectClientsSection projectId={project.id} />

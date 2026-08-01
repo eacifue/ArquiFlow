@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { ProjectsListPage } from "@/features/projects/ProjectsListPage";
 import { ProjectDetailPage } from "@/features/projects/ProjectDetailPage";
 import { UsersPage } from "@/features/users/UsersPage";
+import { SuppliersPage } from "@/features/suppliers/SuppliersPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/projects" element={<ProjectsListPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/suppliers" element={<SuppliersPage />} />
         </Route>
       </Route>
     </Routes>

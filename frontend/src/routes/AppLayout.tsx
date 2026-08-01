@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 export function AppLayout() {
   const { user, logout } = useAuth();
 
+  const canManageProjects = user?.roles.some((r) => r === "Admin" || r === "ProjectManager") ?? false;
+
   const navItems = [
     { to: "/projects", label: "Obras" },
+    ...(canManageProjects ? [{ to: "/suppliers", label: "Proveedores" }] : []),
     ...(user?.roles.includes("Admin") ? [{ to: "/users", label: "Usuarios" }] : []),
   ];
 
