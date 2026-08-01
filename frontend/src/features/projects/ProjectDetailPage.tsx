@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useDeleteProject, useProject } from "./api";
+import { downloadProjectReport } from "./download-report";
 import { useAuth } from "@/features/auth/auth-context";
 import { EditProjectDialog } from "./EditProjectDialog";
 import { ProjectClientsSection } from "./ProjectClientsSection";
@@ -19,6 +20,7 @@ export function ProjectDetailPage() {
   const navigate = useNavigate();
   const deleteProject = useDeleteProject();
   const [editOpen, setEditOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const canManageProject = user?.roles.some((r) => r === "Admin" || r === "ProjectManager");
 
@@ -29,6 +31,17 @@ export function ProjectDetailPage() {
   if (!project) {
     return <p className="text-sm text-destructive">Obra no encontrada.</p>;
   }
+
+  const handleDownloadReport = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadProjectReport(project.id, project.name);
+    } catch {
+      toast.error("No se pudo generar el reporte");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!window.confirm(`¿Eliminar la obra "${project.name}"? Esta acción no se puede deshacer.`)) {
@@ -50,16 +63,21 @@ export function ProjectDetailPage() {
           <h1 className="text-xl font-semibold">{project.name}</h1>
           <p className="text-sm text-muted-foreground">{project.address}</p>
         </div>
-        {canManageProject && (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              Editar
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteProject.isPending}>
-              Eliminar
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleDownloadReport} disabled={isDownloading}>
+            {isDownloading ? "Generando..." : "Descargar reporte"}
+          </Button>
+          {canManageProject && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                Editar
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteProject.isPending}>
+                Eliminar
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="schedule">
