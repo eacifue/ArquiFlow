@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { useProjects } from "./api";
+import { useAuth } from "@/features/auth/auth-context";
+import { CreateProjectDialog } from "./CreateProjectDialog";
 import {
   Table,
   TableBody,
@@ -20,11 +22,14 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function ProjectsListPage() {
   const { data: projects, isLoading, isError } = useProjects();
+  const { user } = useAuth();
+  const canManageProjects = user?.roles.some((r) => r === "Admin" || r === "ProjectManager");
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Obras</h1>
+        {canManageProjects && <CreateProjectDialog />}
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando obras...</p>}

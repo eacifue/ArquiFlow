@@ -2,17 +2,20 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/features/auth/auth-context";
 import { Button } from "@/components/ui/button";
 
-const NAV_ITEMS = [{ to: "/projects", label: "Obras" }];
-
 export function AppLayout() {
   const { user, logout } = useAuth();
+
+  const navItems = [
+    { to: "/projects", label: "Obras" },
+    ...(user?.roles.includes("Admin") ? [{ to: "/users", label: "Usuarios" }] : []),
+  ];
 
   return (
     <div className="flex min-h-screen">
       <aside className="w-56 shrink-0 border-r bg-muted/30 p-4">
         <div className="mb-6 text-lg font-semibold">ArquiFlow</div>
         <nav className="space-y-1">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

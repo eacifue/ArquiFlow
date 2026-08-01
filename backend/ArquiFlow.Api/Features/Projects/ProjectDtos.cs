@@ -19,3 +19,12 @@ public record CreateProjectRequest(
     DateOnly? StartDate,
     DateOnly? EndDate,
     decimal TotalBudget);
+
+public record UpdateProjectRequest(
+    string Name,
+    string? Address,
+    string? Description,
+    DateOnly? StartDate,
+    DateOnly? EndDate,
+    decimal TotalBudget,
+    ProjectStatus Status);

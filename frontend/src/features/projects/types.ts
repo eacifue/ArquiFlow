@@ -11,11 +11,15 @@ export interface Project {
   totalBudget: number;
 }
 
-export interface CreateProjectInput {
+export interface ProjectFormInput {
   name: string;
   address?: string;
   description?: string;
   startDate?: string;
   endDate?: string;
   totalBudget: number;
+}
+
+export interface UpdateProjectInput extends ProjectFormInput {
+  status: ProjectStatus;
 }

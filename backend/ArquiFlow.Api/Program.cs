@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using ArquiFlow.Api.Common;
 using ArquiFlow.Api.Data;
 using ArquiFlow.Api.Data.Entities;
@@ -62,7 +63,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod());
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
