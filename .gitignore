@@ -1,0 +1,12 @@
+# .NET
+backend/**/bin/
+backend/**/obj/
+backend/ArquiFlow.Api/uploads/
+
+# OS
+.DS_Store
+
+# Claude Code / agent tooling (session-local, not part of the app)
+.claude/
+.agents/
+skills-lock.json

@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: arquiflow
+      POSTGRES_USER: arquiflow
+      POSTGRES_PASSWORD: arquiflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arquiflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend/ArquiFlow.Api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=arquiflow;Username=arquiflow;Password=arquiflow"
+      Jwt__Key: "dev-only-super-secret-key-change-me-before-any-real-deploy-01234567"
+      Jwt__Issuer: ArquiFlow.Api
+      Jwt__Audience: ArquiFlow.Client
+      Cors__AllowedOrigins__0: "http://localhost:5173"
+      SeedAdmin__Email: admin@arquiflow.local
+      SeedAdmin__Password: "Admin#12345"
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:
