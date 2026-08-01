@@ -7,6 +7,7 @@ import { EditProjectDialog } from "./EditProjectDialog";
 import { ProjectClientsSection } from "./ProjectClientsSection";
 import { BudgetTab } from "@/features/budget/BudgetTab";
 import { ScheduleTab } from "@/features/schedule/ScheduleTab";
+import { SiteLogTab } from "@/features/sitelog/SiteLogTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,11 +77,7 @@ export function ProjectDetailPage() {
           <BudgetTab projectId={project.id} />
         </TabsContent>
         <TabsContent value="sitelog">
-          <Card>
-            <CardContent className="pt-6 text-sm text-muted-foreground">
-              La bitácora de obra se implementa en la Fase 4.
-            </CardContent>
-          </Card>
+          <SiteLogTab projectId={project.id} />
         </TabsContent>
         <TabsContent value="payments">
           <Card>
