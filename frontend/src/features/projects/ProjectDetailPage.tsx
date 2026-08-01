@@ -5,6 +5,7 @@ import { useDeleteProject, useProject } from "./api";
 import { useAuth } from "@/features/auth/auth-context";
 import { EditProjectDialog } from "./EditProjectDialog";
 import { ProjectClientsSection } from "./ProjectClientsSection";
+import { BudgetTab } from "@/features/budget/BudgetTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,11 +76,7 @@ export function ProjectDetailPage() {
           </Card>
         </TabsContent>
         <TabsContent value="budget">
-          <Card>
-            <CardContent className="pt-6 text-sm text-muted-foreground">
-              El presupuesto vs. gasto real de esta obra se implementa en la Fase 2.
-            </CardContent>
-          </Card>
+          <BudgetTab projectId={project.id} />
         </TabsContent>
         <TabsContent value="sitelog">
           <Card>

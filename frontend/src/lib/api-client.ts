@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5099";
+
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:5099",
+  baseURL: API_BASE_URL,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -11,3 +13,7 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+export function resolveFileUrl(path: string) {
+  return `${API_BASE_URL}${path}`;
+}

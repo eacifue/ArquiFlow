@@ -81,6 +81,14 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+
+    /* Data-viz tokens (see dataviz skill palette.md) */
+    --viz-budgeted: #2a78d6;
+    --viz-spent: #eb6834;
+    --viz-critical: #d03b3b;
+    --viz-gridline: #e1e0d9;
+    --viz-axis: #898781;
+    --viz-cursor: rgba(11, 11, 11, 0.05);
 }
 
 .dark {
@@ -115,6 +123,14 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+
+    /* Data-viz tokens (see dataviz skill palette.md) */
+    --viz-budgeted: #3987e5;
+    --viz-spent: #d95926;
+    --viz-critical: #d03b3b;
+    --viz-gridline: #2c2c2a;
+    --viz-axis: #898781;
+    --viz-cursor: rgba(255, 255, 255, 0.06);
 }
 
 @layer base {
