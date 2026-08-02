@@ -1,4 +1,6 @@
 import { toast } from "sonner";
+import { Trash2Icon } from "lucide-react";
+import { confirm } from "@/components/ui/confirm-dialog";
 import { useDeleteExpense, useExpenses } from "./api";
 import { resolveFileUrl } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,13 @@ export function ExpensesList({ projectId, budgetItemId, canManage }: ExpensesLis
   const deleteExpense = useDeleteExpense(projectId, budgetItemId);
 
   const handleDelete = async (expenseId: string) => {
-    if (!window.confirm("¿Eliminar este gasto?")) return;
+    const confirmed = await confirm({
+      title: "¿Eliminar este gasto?",
+      description: "Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await deleteExpense.mutateAsync(expenseId);
       toast.success("Gasto eliminado");
@@ -68,6 +76,7 @@ export function ExpensesList({ projectId, budgetItemId, canManage }: ExpensesLis
             {canManage && (
               <TableCell>
                 <Button variant="ghost" size="sm" onClick={() => handleDelete(expense.id)}>
+                  <Trash2Icon data-icon="inline-start" />
                   Eliminar
                 </Button>
               </TableCell>

@@ -1,18 +1,34 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import { useAuth } from "@/features/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FieldError } from "@/components/ui/field-error";
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("expired") === "1") {
+      toast.error("Tu sesión expiró. Iniciá sesión de nuevo.");
+      setSearchParams(
+        (params) => {
+          params.delete("expired");
+          return params;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -20,7 +36,10 @@ export function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      navigate("/projects");
+      const from = searchParams.get("from");
+      navigate(from && from.startsWith("/") && from !== "/login" ? from : "/projects", {
+        replace: true,
+      });
     } catch {
       setError("Email o contraseña incorrectos.");
     } finally {
@@ -56,7 +75,7 @@ export function LoginPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            <FieldError message={error ?? undefined} />
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Ingresando..." : "Ingresar"}
             </Button>

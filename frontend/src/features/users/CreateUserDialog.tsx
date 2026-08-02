@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FieldError } from "@/components/ui/field-error";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +21,7 @@ import {
 
 const ROLE_OPTIONS: { value: InternalRole; label: string }[] = [
   { value: "Admin", label: "Admin" },
-  { value: "ProjectManager", label: "Arquitecto / Project Manager" },
+  { value: "ProjectManager", label: "Arquitecto / PM" },
   { value: "Supervisor", label: "Supervisor de obra" },
 ];
 
@@ -76,23 +77,25 @@ export function CreateUserDialog() {
           <div className="space-y-2">
             <Label htmlFor="user-fullName">Nombre completo</Label>
             <Input id="user-fullName" {...register("fullName")} />
-            {errors.fullName && <p className="text-sm text-destructive">{errors.fullName.message}</p>}
+            <FieldError message={errors.fullName?.message} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="user-email">Email</Label>
             <Input id="user-email" type="email" {...register("email")} />
-            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+            <FieldError message={errors.email?.message} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="user-password">Contraseña</Label>
             <Input id="user-password" type="password" {...register("password")} />
-            {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+            <FieldError message={errors.password?.message} />
           </div>
           <div className="space-y-2">
             <Label>Rol</Label>
             <Select value={watch("role")} onValueChange={(value) => setValue("role", value as InternalRole)}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {(value: InternalRole) => ROLE_OPTIONS.find((option) => option.value === value)?.label}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {ROLE_OPTIONS.map((option) => (

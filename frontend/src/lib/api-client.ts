@@ -14,6 +14,23 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isLoginRequest = error.config?.url?.includes("/api/auth/login");
+    const isOnLoginPage = window.location.pathname === "/login";
+
+    if (error.response?.status === 401 && !isLoginRequest && !isOnLoginPage) {
+      localStorage.removeItem("arquiflow.token");
+      localStorage.removeItem("arquiflow.user");
+      const from = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?expired=1&from=${from}`;
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export function resolveFileUrl(path: string) {
   return `${API_BASE_URL}${path}`;
 }

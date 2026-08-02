@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Gantt, ViewMode, type Task } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
+import { TaskListHeaderSpanish } from "./TaskListHeaderSpanish";
 import { toast } from "sonner";
 import { useUpdateTaskSchedule } from "./api";
 import { formatLocalDate, parseLocalDate } from "./date-utils";
@@ -73,7 +74,9 @@ export function GanttChart({ projectId, tasks, editable, onEditTask }: GanttChar
         </div>
         <Select value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
           <SelectTrigger size="sm">
-            <SelectValue />
+            <SelectValue>
+              {(value: ViewMode) => VIEW_MODES.find((mode) => mode.value === value)?.label}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {VIEW_MODES.map((mode) => (
@@ -85,14 +88,16 @@ export function GanttChart({ projectId, tasks, editable, onEditTask }: GanttChar
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border">
         <Gantt
           tasks={ganttTasks}
           viewMode={viewMode}
+          locale="es"
           listCellWidth={editable ? "155px" : ""}
           columnWidth={viewMode === ViewMode.Month ? 300 : viewMode === ViewMode.Week ? 250 : 65}
           barCornerRadius={4}
           todayColor="rgba(42, 120, 214, 0.15)"
+          TaskListHeader={TaskListHeaderSpanish}
           onDateChange={persistScheduleChange}
           onProgressChange={persistScheduleChange}
           onClick={(task) => {

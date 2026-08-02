@@ -1,4 +1,6 @@
 import { toast } from "sonner";
+import { Trash2Icon } from "lucide-react";
+import { confirm } from "@/components/ui/confirm-dialog";
 import { useDeleteSiteLogEntry } from "./api";
 import { resolveFileUrl } from "@/lib/api-client";
 import type { SiteLogEntry } from "./types";
@@ -23,7 +25,13 @@ export function SiteLogTimeline({ projectId, entries, canManage }: SiteLogTimeli
   const deleteEntry = useDeleteSiteLogEntry(projectId);
 
   const handleDelete = async (entry: SiteLogEntry) => {
-    if (!window.confirm(`¿Eliminar la entrada del ${formatDate(entry.date)}? Esto también borra sus fotos.`)) {
+    const confirmed = await confirm({
+      title: `¿Eliminar la entrada del ${formatDate(entry.date)}?`,
+      description: "Esto también borra sus fotos. Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) {
       return;
     }
     try {
@@ -48,6 +56,7 @@ export function SiteLogTimeline({ projectId, entries, canManage }: SiteLogTimeli
             </div>
             {canManage && (
               <Button variant="destructive" size="sm" onClick={() => handleDelete(entry)}>
+                <Trash2Icon data-icon="inline-start" />
                 Eliminar
               </Button>
             )}

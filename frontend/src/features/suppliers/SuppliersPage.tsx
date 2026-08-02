@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { PencilIcon, Trash2Icon, TruckIcon } from "lucide-react";
+import { confirm } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/features/auth/auth-context";
 import { useDeleteSupplier, useSuppliers } from "./api";
 import { CreateSupplierDialog } from "./CreateSupplierDialog";
@@ -8,6 +10,7 @@ import type { Supplier } from "./types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export function SuppliersPage() {
   const { user } = useAuth();
@@ -18,7 +21,13 @@ export function SuppliersPage() {
   const canManage = user?.roles.some((r) => r === "Admin" || r === "ProjectManager") ?? false;
 
   const handleDelete = async (supplier: Supplier) => {
-    if (!window.confirm(`¿Eliminar el proveedor "${supplier.name}"?`)) return;
+    const confirmed = await confirm({
+      title: `¿Eliminar el proveedor "${supplier.name}"?`,
+      description: "Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await deleteSupplier.mutateAsync(supplier.id);
       toast.success("Proveedor eliminado");
@@ -30,14 +39,18 @@ export function SuppliersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Proveedores</h1>
+        <h1 className="text-display font-semibold">Proveedores</h1>
         {canManage && <CreateSupplierDialog />}
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando proveedores...</p>}
       {isError && <p className="text-sm text-destructive">No se pudieron cargar los proveedores.</p>}
       {suppliers && suppliers.length === 0 && (
-        <p className="text-sm text-muted-foreground">Todavía no hay proveedores cargados.</p>
+        <EmptyState
+          icon={TruckIcon}
+          message="Todavía no hay proveedores cargados."
+          action={canManage && <CreateSupplierDialog />}
+        />
       )}
 
       {suppliers && suppliers.length > 0 && (
@@ -65,9 +78,11 @@ export function SuppliersPage() {
                 {canManage && (
                   <TableCell className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => setEditingSupplier(supplier)}>
+                      <PencilIcon data-icon="inline-start" />
                       Editar
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDelete(supplier)}>
+                      <Trash2Icon data-icon="inline-start" />
                       Eliminar
                     </Button>
                   </TableCell>

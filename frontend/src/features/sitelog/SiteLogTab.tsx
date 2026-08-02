@@ -1,7 +1,9 @@
+import { NotebookPenIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-context";
 import { useSiteLogEntries } from "./api";
 import { CreateSiteLogEntryDialog } from "./CreateSiteLogEntryDialog";
 import { SiteLogTimeline } from "./SiteLogTimeline";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export function SiteLogTab({ projectId }: { projectId: string }) {
   const { user } = useAuth();
@@ -20,7 +22,11 @@ export function SiteLogTab({ projectId }: { projectId: string }) {
       {isLoading && <p className="text-sm text-muted-foreground">Cargando bitácora...</p>}
       {isError && <p className="text-sm text-destructive">No se pudo cargar la bitácora.</p>}
       {entries && entries.length === 0 && (
-        <p className="text-sm text-muted-foreground">Todavía no hay entradas de bitácora.</p>
+        <EmptyState
+          icon={NotebookPenIcon}
+          message="Todavía no hay entradas de bitácora."
+          action={canCreate && <CreateSiteLogEntryDialog projectId={projectId} />}
+        />
       )}
 
       {entries && entries.length > 0 && (

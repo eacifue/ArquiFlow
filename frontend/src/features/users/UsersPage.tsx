@@ -15,7 +15,7 @@ export function UsersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Usuarios</h1>
+        <h1 className="text-display font-semibold">Usuarios</h1>
         <CreateUserDialog />
       </div>
 

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FieldError } from "@/components/ui/field-error";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -80,7 +82,9 @@ export function CreatePaymentDialog({ projectId }: { projectId: string }) {
             <Label>Proveedor</Label>
             <Select value={watch("supplierId")} onValueChange={(value) => setValue("supplierId", value ?? "")}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Elegir proveedor" />
+                <SelectValue placeholder="Elegir proveedor">
+                  {(value: string) => suppliers?.find((supplier) => supplier.id === value)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {suppliers?.map((supplier) => (
@@ -90,14 +94,21 @@ export function CreatePaymentDialog({ projectId }: { projectId: string }) {
                 ))}
               </SelectContent>
             </Select>
-            {errors.supplierId && <p className="text-sm text-destructive">{errors.supplierId.message}</p>}
+            <FieldError message={errors.supplierId?.message} />
           </div>
 
           <div className="space-y-2">
             <Label>Vincular a un gasto (opcional)</Label>
             <Select value={watch("expenseId")} onValueChange={(value) => setValue("expenseId", value ?? NONE_EXPENSE)}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {(value: string) => {
+                    if (value === NONE_EXPENSE) return "Sin vincular";
+                    const expense = expenses?.find((e) => e.id === value);
+                    if (!expense) return null;
+                    return `${expense.budgetItemDescription} — ${expense.date} ($${expense.amount.toLocaleString("es-AR")})`;
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NONE_EXPENSE}>Sin vincular</SelectItem>
@@ -114,12 +125,12 @@ export function CreatePaymentDialog({ projectId }: { projectId: string }) {
             <div className="space-y-2">
               <Label htmlFor="pay-amount">Monto</Label>
               <Input id="pay-amount" type="number" step="0.01" {...register("amount")} />
-              {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
+              <FieldError message={errors.amount?.message} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="pay-date">Fecha</Label>
-              <Input id="pay-date" type="date" {...register("date")} />
-              {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
+              <DatePicker id="pay-date" value={watch("date") ?? ""} onChange={(value) => setValue("date", value)} />
+              <FieldError message={errors.date?.message} />
             </div>
           </div>
           <div className="space-y-2">

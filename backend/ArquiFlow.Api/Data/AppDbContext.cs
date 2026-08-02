@@ -17,6 +17,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<SiteLogPhoto> SiteLogPhotos => Set<SiteLogPhoto>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<TaskType> TaskTypes => Set<TaskType>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -93,6 +94,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithMany()
                 .HasForeignKey(p => p.ExpenseId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<TaskType>(e =>
+        {
+            e.Property(p => p.Name).IsRequired().HasMaxLength(200);
+            e.HasIndex(p => p.Name).IsUnique();
         });
 
         builder.Entity<ProjectClientAccess>(e =>

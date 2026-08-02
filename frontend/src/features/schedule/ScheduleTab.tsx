@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { CalendarDaysIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { confirm } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/features/auth/auth-context";
 import { useDeleteScheduleTask, useScheduleTasks } from "./api";
 import { CreateScheduleTaskDialog } from "./CreateScheduleTaskDialog";
@@ -9,6 +11,7 @@ import type { ScheduleTask } from "./types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const STATUS_LABEL: Record<ScheduleTask["status"], string> = {
   NotStarted: "No iniciada",
@@ -26,7 +29,13 @@ export function ScheduleTab({ projectId }: { projectId: string }) {
   const canManage = user?.roles.some((r) => r === "Admin" || r === "ProjectManager") ?? false;
 
   const handleDelete = async (task: ScheduleTask) => {
-    if (!window.confirm(`¿Eliminar la tarea "${task.name}"?`)) return;
+    const confirmed = await confirm({
+      title: `¿Eliminar la tarea "${task.name}"?`,
+      description: "Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await deleteTask.mutateAsync(task.id);
       toast.success("Tarea eliminada");
@@ -45,7 +54,13 @@ export function ScheduleTab({ projectId }: { projectId: string }) {
       {isLoading && <p className="text-sm text-muted-foreground">Cargando cronograma...</p>}
       {isError && <p className="text-sm text-destructive">No se pudo cargar el cronograma.</p>}
       {tasks && tasks.length === 0 && (
-        <p className="text-sm text-muted-foreground">Todavía no hay tareas cargadas.</p>
+        <EmptyState
+          icon={CalendarDaysIcon}
+          message="Todavía no hay tareas cargadas."
+          action={
+            canManage && <CreateScheduleTaskDialog projectId={projectId} nextSortOrder={tasks?.length ?? 0} />
+          }
+        />
       )}
 
       {tasks && tasks.length > 0 && (
@@ -76,16 +91,26 @@ export function ScheduleTab({ projectId }: { projectId: string }) {
                   <TableCell>{task.endDate}</TableCell>
                   <TableCell>{task.progressPercent}%</TableCell>
                   <TableCell>
-                    <Badge variant={task.status === "Delayed" ? "destructive" : "secondary"}>
+                    <Badge
+                      variant={
+                        task.status === "Delayed"
+                          ? "destructive"
+                          : task.status === "Done"
+                            ? "success"
+                            : "secondary"
+                      }
+                    >
                       {STATUS_LABEL[task.status]}
                     </Badge>
                   </TableCell>
                   {canManage && (
                     <TableCell className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setEditingTask(task)}>
+                        <PencilIcon data-icon="inline-start" />
                         Editar
                       </Button>
                       <Button variant="destructive" size="sm" onClick={() => handleDelete(task)}>
+                        <Trash2Icon data-icon="inline-start" />
                         Eliminar
                       </Button>
                     </TableCell>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Building2Icon } from "lucide-react";
 import { useProjects } from "./api";
 import { useAuth } from "@/features/auth/auth-context";
 import { CreateProjectDialog } from "./CreateProjectDialog";
@@ -11,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const STATUS_LABEL: Record<string, string> = {
   Planning: "Planificación",
@@ -28,7 +30,7 @@ export function ProjectsListPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Obras</h1>
+        <h1 className="text-display font-semibold">Obras</h1>
         {canManageProjects && <CreateProjectDialog />}
       </div>
 
@@ -36,7 +38,11 @@ export function ProjectsListPage() {
       {isError && <p className="text-sm text-destructive">No se pudieron cargar las obras.</p>}
 
       {projects && projects.length === 0 && (
-        <p className="text-sm text-muted-foreground">Todavía no hay obras cargadas.</p>
+        <EmptyState
+          icon={Building2Icon}
+          message="Todavía no hay obras cargadas."
+          action={canManageProjects && <CreateProjectDialog />}
+        />
       )}
 
       {projects && projects.length > 0 && (
@@ -59,7 +65,9 @@ export function ProjectsListPage() {
                 </TableCell>
                 <TableCell>{project.address ?? "—"}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{STATUS_LABEL[project.status] ?? project.status}</Badge>
+                  <Badge variant={project.status === "Completed" ? "success" : "secondary"}>
+                    {STATUS_LABEL[project.status] ?? project.status}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   {project.totalBudget.toLocaleString("es-AR", {

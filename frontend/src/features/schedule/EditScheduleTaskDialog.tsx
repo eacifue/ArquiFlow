@@ -1,14 +1,18 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useUpdateScheduleTask } from "./api";
+import { useTaskTypes } from "@/features/tasktypes/api";
 import type { ScheduleTask } from "./types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FieldError } from "@/components/ui/field-error";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const schema = z
   .object({
@@ -33,7 +37,9 @@ interface EditScheduleTaskDialogProps {
 
 export function EditScheduleTaskDialog({ projectId, task, open, onOpenChange }: EditScheduleTaskDialogProps) {
   const updateTask = useUpdateScheduleTask(projectId, task.id);
+  const { data: taskTypes, isLoading: taskTypesLoading } = useTaskTypes();
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -76,26 +82,59 @@ export function EditScheduleTaskDialog({ projectId, task, open, onOpenChange }: 
         <form className="space-y-4" onSubmit={onSubmit}>
           <div className="space-y-2">
             <Label htmlFor="edit-task-name">Nombre</Label>
-            <Input id="edit-task-name" {...register("name")} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="edit-task-name" className="w-full">
+                    <SelectValue placeholder={taskTypesLoading ? "Cargando..." : "Elegir tarea"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taskTypes?.map((taskType) => (
+                      <SelectItem key={taskType.id} value={taskType.name}>
+                        {taskType.name}
+                      </SelectItem>
+                    ))}
+                    {/* The task's current name might not exist in the master anymore
+                        (renamed/deleted after this task was created) — keep it selectable
+                        so editing doesn't force a change the user didn't ask for. */}
+                    {task.name && !taskTypes?.some((t) => t.name === task.name) && (
+                      <SelectItem value={task.name}>{task.name}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldError message={errors.name?.message} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-task-startDate">Fecha de inicio</Label>
-              <Input id="edit-task-startDate" type="date" {...register("startDate")} />
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker id="edit-task-startDate" value={field.value} onChange={field.onChange} />
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-task-endDate">Fecha de fin</Label>
-              <Input id="edit-task-endDate" type="date" {...register("endDate")} />
-              {errors.endDate && <p className="text-sm text-destructive">{errors.endDate.message}</p>}
+              <Controller
+                name="endDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker id="edit-task-endDate" value={field.value} onChange={field.onChange} />
+                )}
+              />
+              <FieldError message={errors.endDate?.message} />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-task-progress">Avance (%)</Label>
             <Input id="edit-task-progress" type="number" min={0} max={100} {...register("progressPercent")} />
-            {errors.progressPercent && (
-              <p className="text-sm text-destructive">{errors.progressPercent.message}</p>
-            )}
+            <FieldError message={errors.progressPercent?.message} />
             <p className="text-xs text-muted-foreground">
               El estado (no iniciada / en curso / hecha / atrasada) se calcula solo a partir del avance y la
               fecha de fin.

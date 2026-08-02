@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -7,6 +7,8 @@ import { useCreateExpense } from "./api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError } from "@/components/ui/field-error";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +32,7 @@ export function CreateExpenseDialog({ projectId, budgetItemId }: { projectId: st
   const createExpense = useCreateExpense(projectId, budgetItemId);
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -71,12 +74,16 @@ export function CreateExpenseDialog({ projectId, budgetItemId }: { projectId: st
             <div className="space-y-2">
               <Label htmlFor="exp-amount">Monto</Label>
               <Input id="exp-amount" type="number" step="0.01" {...register("amount")} />
-              {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
+              <FieldError message={errors.amount?.message} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="exp-date">Fecha</Label>
-              <Input id="exp-date" type="date" {...register("date")} />
-              {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
+              <Controller
+                name="date"
+                control={control}
+                render={({ field }) => <DatePicker id="exp-date" value={field.value} onChange={field.onChange} />}
+              />
+              <FieldError message={errors.date?.message} />
             </div>
           </div>
           <div className="space-y-2">

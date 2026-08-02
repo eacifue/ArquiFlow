@@ -1,9 +1,11 @@
+import { WalletIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBudgetItems } from "./api";
 import { CreateBudgetItemDialog } from "./CreateBudgetItemDialog";
 import { BudgetItemCard } from "./BudgetItemCard";
 import { BudgetVsActualChart } from "./BudgetVsActualChart";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -28,7 +30,11 @@ export function BudgetTab({ projectId }: { projectId: string }) {
       {isError && <p className="text-sm text-destructive">No se pudo cargar el presupuesto.</p>}
 
       {items && items.length === 0 && (
-        <p className="text-sm text-muted-foreground">Todavía no hay ítems de presupuesto cargados.</p>
+        <EmptyState
+          icon={WalletIcon}
+          message="Todavía no hay ítems de presupuesto cargados."
+          action={canManage && <CreateBudgetItemDialog projectId={projectId} />}
+        />
       )}
 
       {items && items.length > 0 && (
@@ -37,13 +43,13 @@ export function BudgetTab({ projectId }: { projectId: string }) {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground">Presupuestado total</p>
-                <p className="text-xl font-semibold tabular-nums">{currency.format(totalBudgeted)}</p>
+                <p className="text-display font-semibold tabular-nums">{currency.format(totalBudgeted)}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground">Gastado total</p>
-                <p className={`text-xl font-semibold tabular-nums ${totalSpent > totalBudgeted ? "text-destructive" : ""}`}>
+                <p className={`text-display font-semibold tabular-nums ${totalSpent > totalBudgeted ? "text-destructive" : ""}`}>
                   {currency.format(totalSpent)}
                 </p>
               </CardContent>
@@ -51,7 +57,7 @@ export function BudgetTab({ projectId }: { projectId: string }) {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground">Disponible</p>
-                <p className={`text-xl font-semibold tabular-nums ${totalSpent > totalBudgeted ? "text-destructive" : ""}`}>
+                <p className={`text-display font-semibold tabular-nums ${totalSpent > totalBudgeted ? "text-destructive" : ""}`}>
                   {currency.format(totalBudgeted - totalSpent)}
                 </p>
               </CardContent>

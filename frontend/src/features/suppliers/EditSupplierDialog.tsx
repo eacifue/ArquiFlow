@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FieldError } from "@/components/ui/field-error";
 
 const schema = z.object({
   name: z.string().min(1, "Requerido").max(200),
@@ -84,7 +85,7 @@ export function EditSupplierDialog({ supplier, open, onOpenChange }: EditSupplie
           <div className="space-y-2">
             <Label htmlFor="edit-sup-name">Nombre</Label>
             <Input id="edit-sup-name" {...register("name")} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            <FieldError message={errors.name?.message} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -100,7 +101,7 @@ export function EditSupplierDialog({ supplier, open, onOpenChange }: EditSupplie
             <div className="space-y-2">
               <Label htmlFor="edit-sup-email">Email</Label>
               <Input id="edit-sup-email" type="email" {...register("email")} />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+              <FieldError message={errors.email?.message} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-sup-taxId">CUIT</Label>

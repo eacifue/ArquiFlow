@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FieldError } from "@/components/ui/field-error";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
   { value: "Planning", label: "Planificación" },
@@ -42,6 +44,7 @@ export function EditProjectDialog({ project, open, onOpenChange }: EditProjectDi
   const updateProject = useUpdateProject(project.id);
   const {
     register,
+    control,
     handleSubmit,
     reset,
     watch,
@@ -98,7 +101,7 @@ export function EditProjectDialog({ project, open, onOpenChange }: EditProjectDi
           <div className="space-y-2">
             <Label htmlFor="edit-name">Nombre</Label>
             <Input id="edit-name" {...register("name")} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            <FieldError message={errors.name?.message} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-address">Dirección</Label>
@@ -111,20 +114,30 @@ export function EditProjectDialog({ project, open, onOpenChange }: EditProjectDi
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-startDate">Fecha de inicio</Label>
-              <Input id="edit-startDate" type="date" {...register("startDate")} />
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker id="edit-startDate" value={field.value ?? ""} onChange={field.onChange} />
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-endDate">Fecha de fin</Label>
-              <Input id="edit-endDate" type="date" {...register("endDate")} />
+              <Controller
+                name="endDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker id="edit-endDate" value={field.value ?? ""} onChange={field.onChange} />
+                )}
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-totalBudget">Presupuesto total</Label>
               <Input id="edit-totalBudget" type="number" step="0.01" {...register("totalBudget")} />
-              {errors.totalBudget && (
-                <p className="text-sm text-destructive">{errors.totalBudget.message}</p>
-              )}
+              <FieldError message={errors.totalBudget?.message} />
             </div>
             <div className="space-y-2">
               <Label>Estado</Label>
@@ -133,7 +146,9 @@ export function EditProjectDialog({ project, open, onOpenChange }: EditProjectDi
                 onValueChange={(value) => setValue("status", value as ProjectStatus)}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {(value: ProjectStatus) => STATUS_OPTIONS.find((option) => option.value === value)?.label}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((option) => (

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FieldError } from "@/components/ui/field-error";
 import {
   Dialog,
   DialogContent,
@@ -89,15 +90,13 @@ export function CreateBudgetItemDialog({ projectId }: { projectId: string }) {
           <div className="space-y-2">
             <Label htmlFor="bi-description">Descripción</Label>
             <Input id="bi-description" {...register("description")} />
-            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
+            <FieldError message={errors.description?.message} />
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2 space-y-2">
               <Label htmlFor="bi-budgetedAmount">Presupuestado</Label>
               <Input id="bi-budgetedAmount" type="number" step="0.01" {...register("budgetedAmount")} />
-              {errors.budgetedAmount && (
-                <p className="text-sm text-destructive">{errors.budgetedAmount.message}</p>
-              )}
+              <FieldError message={errors.budgetedAmount?.message} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="bi-unit">Unidad</Label>

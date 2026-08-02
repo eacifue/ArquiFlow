@@ -1,4 +1,6 @@
 import { toast } from "sonner";
+import { BanknoteIcon, Trash2Icon } from "lucide-react";
+import { confirm } from "@/components/ui/confirm-dialog";
 import { usePayments, useDeletePayment, useUpdatePaymentStatus } from "./api";
 import { CreatePaymentDialog } from "./CreatePaymentDialog";
 import type { Payment } from "./types";
@@ -6,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -55,7 +58,13 @@ export function PaymentsTab({ projectId }: { projectId: string }) {
   };
 
   const handleDelete = async (payment: Payment) => {
-    if (!window.confirm(`¿Eliminar el pago a ${payment.supplierName} por ${currency.format(payment.amount)}?`)) return;
+    const confirmed = await confirm({
+      title: `¿Eliminar el pago a ${payment.supplierName}?`,
+      description: `Por ${currency.format(payment.amount)}. Esta acción no se puede deshacer.`,
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await deletePayment.mutateAsync(payment.id);
       toast.success("Pago eliminado");
@@ -76,7 +85,11 @@ export function PaymentsTab({ projectId }: { projectId: string }) {
       {isLoading && <p className="text-sm text-muted-foreground">Cargando pagos...</p>}
       {isError && <p className="text-sm text-destructive">No se pudieron cargar los pagos.</p>}
       {payments && payments.length === 0 && (
-        <p className="text-sm text-muted-foreground">Todavía no hay pagos registrados.</p>
+        <EmptyState
+          icon={BanknoteIcon}
+          message="Todavía no hay pagos registrados."
+          action={<CreatePaymentDialog projectId={projectId} />}
+        />
       )}
 
       {payments && payments.length > 0 && (
@@ -128,7 +141,7 @@ export function PaymentsTab({ projectId }: { projectId: string }) {
                   <TableCell>{payment.method ?? "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{currency.format(payment.amount)}</TableCell>
                   <TableCell>
-                    <Badge variant={payment.status === "Paid" ? "secondary" : "destructive"}>
+                    <Badge variant={payment.status === "Paid" ? "success" : "destructive"}>
                       {payment.status === "Paid" ? "Pagado" : "Pendiente"}
                     </Badge>
                   </TableCell>
@@ -137,6 +150,7 @@ export function PaymentsTab({ projectId }: { projectId: string }) {
                       {payment.status === "Pending" ? "Marcar pagado" : "Marcar pendiente"}
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDelete(payment)}>
+                      <Trash2Icon data-icon="inline-start" />
                       Eliminar
                     </Button>
                   </TableCell>

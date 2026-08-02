@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { PencilIcon, Trash2Icon } from "lucide-react";
+import { confirm } from "@/components/ui/confirm-dialog";
 import { useDeleteBudgetItem } from "./api";
 import { EditBudgetItemDialog } from "./EditBudgetItemDialog";
 import { CreateExpenseDialog } from "./CreateExpenseDialog";
@@ -28,7 +30,13 @@ export function BudgetItemCard({ projectId, item, canManage, canAddExpense }: Bu
   const pctUsed = item.budgetedAmount > 0 ? Math.round((item.spentAmount / item.budgetedAmount) * 100) : 0;
 
   const handleDelete = async () => {
-    if (!window.confirm(`¿Eliminar el ítem "${item.description}"? Esto también borra sus gastos.`)) return;
+    const confirmed = await confirm({
+      title: `¿Eliminar el ítem "${item.description}"?`,
+      description: "Esto también borra sus gastos. Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await deleteBudgetItem.mutateAsync(item.id);
       toast.success("Ítem eliminado");
@@ -55,9 +63,11 @@ export function BudgetItemCard({ projectId, item, canManage, canAddExpense }: Bu
         {canManage && (
           <div className="flex shrink-0 gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <PencilIcon data-icon="inline-start" />
               Editar
             </Button>
             <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteBudgetItem.isPending}>
+              <Trash2Icon data-icon="inline-start" />
               Eliminar
             </Button>
           </div>

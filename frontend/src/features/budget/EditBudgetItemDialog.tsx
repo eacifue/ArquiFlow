@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FieldError } from "@/components/ui/field-error";
 
 const schema = z.object({
   category: z.enum(BUDGET_CATEGORIES),
@@ -94,15 +95,13 @@ export function EditBudgetItemDialog({ projectId, item, open, onOpenChange }: Ed
           <div className="space-y-2">
             <Label htmlFor="edit-bi-description">Descripción</Label>
             <Input id="edit-bi-description" {...register("description")} />
-            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
+            <FieldError message={errors.description?.message} />
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2 space-y-2">
               <Label htmlFor="edit-bi-budgetedAmount">Presupuestado</Label>
               <Input id="edit-bi-budgetedAmount" type="number" step="0.01" {...register("budgetedAmount")} />
-              {errors.budgetedAmount && (
-                <p className="text-sm text-destructive">{errors.budgetedAmount.message}</p>
-              )}
+              <FieldError message={errors.budgetedAmount?.message} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-bi-unit">Unidad</Label>

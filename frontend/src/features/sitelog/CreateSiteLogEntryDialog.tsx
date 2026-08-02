@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldError } from "@/components/ui/field-error";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +33,7 @@ export function CreateSiteLogEntryDialog({ projectId }: { projectId: string }) {
   const createEntry = useCreateSiteLogEntry(projectId);
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -71,8 +74,12 @@ export function CreateSiteLogEntryDialog({ projectId }: { projectId: string }) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="log-date">Fecha</Label>
-              <Input id="log-date" type="date" {...register("date")} />
-              {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
+              <Controller
+                name="date"
+                control={control}
+                render={({ field }) => <DatePicker id="log-date" value={field.value} onChange={field.onChange} />}
+              />
+              <FieldError message={errors.date?.message} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="log-weather">Clima</Label>

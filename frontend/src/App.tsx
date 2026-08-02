@@ -6,6 +6,7 @@ import { ProjectsListPage } from "@/features/projects/ProjectsListPage";
 import { ProjectDetailPage } from "@/features/projects/ProjectDetailPage";
 import { UsersPage } from "@/features/users/UsersPage";
 import { SuppliersPage } from "@/features/suppliers/SuppliersPage";
+import { TaskTypesPage } from "@/features/tasktypes/TaskTypesPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/suppliers" element={<SuppliersPage />} />
+          <Route path="/task-types" element={<TaskTypesPage />} />
         </Route>
       </Route>
     </Routes>

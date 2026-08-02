@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldError } from "@/components/ui/field-error";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +35,7 @@ export function CreateProjectDialog() {
   const createProject = useCreateProject();
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -72,7 +75,7 @@ export function CreateProjectDialog() {
           <div className="space-y-2">
             <Label htmlFor="name">Nombre</Label>
             <Input id="name" {...register("name")} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            <FieldError message={errors.name?.message} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="address">Dirección</Label>
@@ -85,19 +88,29 @@ export function CreateProjectDialog() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">Fecha de inicio</Label>
-              <Input id="startDate" type="date" {...register("startDate")} />
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker id="startDate" value={field.value ?? ""} onChange={field.onChange} />
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="endDate">Fecha de fin</Label>
-              <Input id="endDate" type="date" {...register("endDate")} />
+              <Controller
+                name="endDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker id="endDate" value={field.value ?? ""} onChange={field.onChange} />
+                )}
+              />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="totalBudget">Presupuesto total</Label>
             <Input id="totalBudget" type="number" step="0.01" {...register("totalBudget")} />
-            {errors.totalBudget && (
-              <p className="text-sm text-destructive">{errors.totalBudget.message}</p>
-            )}
+            <FieldError message={errors.totalBudget?.message} />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={createProject.isPending}>

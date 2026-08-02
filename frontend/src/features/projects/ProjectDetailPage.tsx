@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { DownloadIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { confirm } from "@/components/ui/confirm-dialog";
 import { useDeleteProject, useProject } from "./api";
 import { downloadProjectReport } from "./download-report";
 import { useAuth } from "@/features/auth/auth-context";
@@ -44,7 +46,13 @@ export function ProjectDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`¿Eliminar la obra "${project.name}"? Esta acción no se puede deshacer.`)) {
+    const confirmed = await confirm({
+      title: `¿Eliminar la obra "${project.name}"?`,
+      description: "Se borra junto con su cronograma, presupuesto, bitácora y pagos. Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar obra",
+      variant: "destructive",
+    });
+    if (!confirmed) {
       return;
     }
     try {
@@ -58,21 +66,24 @@ export function ProjectDetailPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold">{project.name}</h1>
+          <h1 className="text-display font-semibold">{project.name}</h1>
           <p className="text-sm text-muted-foreground">{project.address}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleDownloadReport} disabled={isDownloading}>
+            <DownloadIcon data-icon="inline-start" />
             {isDownloading ? "Generando..." : "Descargar reporte"}
           </Button>
           {canManageProject && (
             <>
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <PencilIcon data-icon="inline-start" />
                 Editar
               </Button>
               <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteProject.isPending}>
+                <Trash2Icon data-icon="inline-start" />
                 Eliminar
               </Button>
             </>

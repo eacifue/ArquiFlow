@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useCreateScheduleTask } from "./api";
+import { useTaskTypes } from "@/features/tasktypes/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError } from "@/components/ui/field-error";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -32,12 +35,13 @@ type FormValues = z.infer<typeof schema>;
 export function CreateScheduleTaskDialog({ projectId, nextSortOrder }: { projectId: string; nextSortOrder: number }) {
   const [open, setOpen] = useState(false);
   const createTask = useCreateScheduleTask(projectId);
+  const { data: taskTypes, isLoading: taskTypesLoading } = useTaskTypes();
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: "", startDate: "", endDate: "" } });
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -66,19 +70,53 @@ export function CreateScheduleTaskDialog({ projectId, nextSortOrder }: { project
         <form className="space-y-4" onSubmit={onSubmit}>
           <div className="space-y-2">
             <Label htmlFor="task-name">Nombre</Label>
-            <Input id="task-name" {...register("name")} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="task-name" className="w-full">
+                    <SelectValue placeholder={taskTypesLoading ? "Cargando..." : "Elegir tarea"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taskTypes?.map((taskType) => (
+                      <SelectItem key={taskType.id} value={taskType.name}>
+                        {taskType.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldError message={errors.name?.message} />
+            {taskTypes && taskTypes.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Todavía no hay tareas en el maestro. Un Admin puede cargarlas en "Maestro de tareas".
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="task-startDate">Fecha de inicio</Label>
-              <Input id="task-startDate" type="date" {...register("startDate")} />
-              {errors.startDate && <p className="text-sm text-destructive">{errors.startDate.message}</p>}
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker id="task-startDate" value={field.value} onChange={field.onChange} />
+                )}
+              />
+              <FieldError message={errors.startDate?.message} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="task-endDate">Fecha de fin</Label>
-              <Input id="task-endDate" type="date" {...register("endDate")} />
-              {errors.endDate && <p className="text-sm text-destructive">{errors.endDate.message}</p>}
+              <Controller
+                name="endDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker id="task-endDate" value={field.value} onChange={field.onChange} />
+                )}
+              />
+              <FieldError message={errors.endDate?.message} />
             </div>
           </div>
           <DialogFooter>
