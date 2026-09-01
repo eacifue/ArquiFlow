@@ -17,7 +17,19 @@ QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddSingleton<JwtTokenService>();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+
+// R2 (Cloudflare) storage kicks in only when configured; local dev with
+// docker-compose keeps using disk storage unchanged.
+var r2BucketName = builder.Configuration[$"{R2StorageOptions.SectionName}:BucketName"];
+if (!string.IsNullOrWhiteSpace(r2BucketName))
+{
+    builder.Services.Configure<R2StorageOptions>(builder.Configuration.GetSection(R2StorageOptions.SectionName));
+    builder.Services.AddScoped<IFileStorageService, R2FileStorageService>();
+}
+else
+{
+    builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+}
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));

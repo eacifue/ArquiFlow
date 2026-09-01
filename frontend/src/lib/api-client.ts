@@ -32,5 +32,10 @@ apiClient.interceptors.response.use(
 );
 
 export function resolveFileUrl(path: string) {
+  // Local storage returns a relative path ("/uploads/x.jpg"); R2 storage
+  // returns an already-absolute public URL — pass that through untouched.
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
   return `${API_BASE_URL}${path}`;
 }
