@@ -36,9 +36,9 @@ public class R2FileStorageService : IFileStorageService
         {
             ServiceURL = $"https://{config.AccountId}.r2.cloudflarestorage.com",
             ForcePathStyle = true,
-            // R2 doesn't implement the AWS SDK v4 default chunked-with-trailing-checksum
-            // upload encoding ("STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER") — fall back
-            // to the classic signing path, which R2 supports.
+            // R2 implements neither of the AWS SDK v4 chunked-signing payload modes
+            // ("STREAMING-AWS4-HMAC-SHA256-PAYLOAD[-TRAILER]") — see UseChunkEncoding
+            // on the request below for the actual fix.
             RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
             ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
         };
@@ -64,6 +64,8 @@ public class R2FileStorageService : IFileStorageService
             Key = key,
             InputStream = buffered,
             AutoCloseStream = true,
+            UseChunkEncoding = false,
+            DisablePayloadSigning = true,
         }, ct);
 
         return $"{_publicBaseUrl}/{key}";
