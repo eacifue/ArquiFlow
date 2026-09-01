@@ -49,12 +49,21 @@ public class R2FileStorageService : IFileStorageService
     {
         var key = $"{Guid.NewGuid()}{Path.GetExtension(fileName)}";
 
+        // R2 doesn't support the AWS SDK's chunked/streaming SigV4 transfer mode
+        // (used automatically for non-seekable or length-unknown streams, e.g. an
+        // IFormFile's read stream). Buffering into a MemoryStream gives the SDK a
+        // known length and seek support, so it falls back to standard, fully
+        // buffered signing instead — which R2 does support.
+        var buffered = new MemoryStream();
+        await content.CopyToAsync(buffered, ct);
+        buffered.Position = 0;
+
         await _client.PutObjectAsync(new PutObjectRequest
         {
             BucketName = _bucketName,
             Key = key,
-            InputStream = content,
-            AutoCloseStream = false,
+            InputStream = buffered,
+            AutoCloseStream = true,
         }, ct);
 
         return $"{_publicBaseUrl}/{key}";
