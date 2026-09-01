@@ -36,6 +36,11 @@ public class R2FileStorageService : IFileStorageService
         {
             ServiceURL = $"https://{config.AccountId}.r2.cloudflarestorage.com",
             ForcePathStyle = true,
+            // R2 doesn't implement the AWS SDK v4 default chunked-with-trailing-checksum
+            // upload encoding ("STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER") — fall back
+            // to the classic signing path, which R2 supports.
+            RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
+            ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
         };
         _client = new AmazonS3Client(credentials, s3Config);
     }
