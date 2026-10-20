@@ -19,6 +19,10 @@ public class Project
     public DateOnly? EndDate { get; set; }
     public ProjectStatus Status { get; set; } = ProjectStatus.Planning;
     public decimal TotalBudget { get; set; }
+    public Guid? ProjectManagerId { get; set; }
+    public ApplicationUser? ProjectManager { get; set; }
+    public Guid? SupervisorId { get; set; }
+    public ApplicationUser? Supervisor { get; set; }
 
     public ICollection<BudgetItem> BudgetItems { get; set; } = new List<BudgetItem>();
     public ICollection<ScheduleTask> ScheduleTasks { get; set; } = new List<ScheduleTask>();

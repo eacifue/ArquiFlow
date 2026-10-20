@@ -19,7 +19,11 @@ public class SuppliersController(AppDbContext db) : ControllerBase
     {
         var suppliers = await db.Suppliers
             .OrderBy(s => s.Name)
-            .Select(s => new SupplierDto(s.Id, s.Name, s.ContactName, s.Phone, s.Email, s.TaxId, s.Category))
+            .Select(s => new SupplierDto(s.Id, s.Name, s.ContactName, s.Phone, s.Email, s.TaxId, s.Category,
+                s.Payments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => (decimal?)p.Amount) ?? 0,
+                s.Payments.Where(p => p.Status == PaymentStatus.Pending).Sum(p => (decimal?)p.Amount) ?? 0,
+                db.Projects.Count(pr => pr.Payments.Any(p => p.SupplierId == s.Id)
+                    || pr.BudgetItems.Any(b => b.Expenses.Any(e => e.SupplierId == s.Id)))))
             .ToListAsync(ct);
 
         return Ok(suppliers);
@@ -43,7 +47,7 @@ public class SuppliersController(AppDbContext db) : ControllerBase
         db.Suppliers.Add(supplier);
         await db.SaveChangesAsync(ct);
 
-        var dto = new SupplierDto(supplier.Id, supplier.Name, supplier.ContactName, supplier.Phone, supplier.Email, supplier.TaxId, supplier.Category);
+        var dto = new SupplierDto(supplier.Id, supplier.Name, supplier.ContactName, supplier.Phone, supplier.Email, supplier.TaxId, supplier.Category, 0, 0, 0);
         return CreatedAtAction(nameof(GetAll), dto);
     }
 
@@ -66,7 +70,14 @@ public class SuppliersController(AppDbContext db) : ControllerBase
 
         await db.SaveChangesAsync(ct);
 
-        return Ok(new SupplierDto(supplier.Id, supplier.Name, supplier.ContactName, supplier.Phone, supplier.Email, supplier.TaxId, supplier.Category));
+        return Ok(await db.Suppliers
+            .Where(s => s.Id == id)
+            .Select(s => new SupplierDto(s.Id, s.Name, s.ContactName, s.Phone, s.Email, s.TaxId, s.Category,
+                s.Payments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => (decimal?)p.Amount) ?? 0,
+                s.Payments.Where(p => p.Status == PaymentStatus.Pending).Sum(p => (decimal?)p.Amount) ?? 0,
+                db.Projects.Count(pr => pr.Payments.Any(p => p.SupplierId == s.Id)
+                    || pr.BudgetItems.Any(b => b.Expenses.Any(e => e.SupplierId == s.Id)))))
+            .FirstAsync(ct));
     }
 
     [HttpDelete("{id:guid}")]
@@ -79,12 +90,7 @@ public class SuppliersController(AppDbContext db) : ControllerBase
             return NotFound();
         }
 
-        var hasPayments = await db.Payments.AnyAsync(p => p.SupplierId == id, ct);
-        if (hasPayments)
-        {
-            return Conflict("No se puede eliminar: el proveedor tiene pagos registrados.");
-        }
-
+        // Expenses and payments survive the delete, left without a supplier (SetNull FKs).
         db.Suppliers.Remove(supplier);
         await db.SaveChangesAsync(ct);
 

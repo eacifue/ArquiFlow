@@ -8,13 +8,23 @@ public record SiteLogEntryDto(
     DateOnly Date,
     string? Notes,
     string? Weather,
+    Guid AuthorUserId,
     string AuthorName,
+    string? AuthorRole,
+    DateTime CreatedAt,
     IReadOnlyList<SiteLogPhotoDto> Photos);
 
-public class CreateSiteLogEntryRequest
+public record SiteLogPhotoInput(string FileUrl, string? Caption);
+
+public record SaveSiteLogEntryRequest(
+    DateOnly Date,
+    string? Notes,
+    string? Weather,
+    List<SiteLogPhotoInput>? Photos);
+
+public record UploadedPhotoDto(string FileUrl);
+
+public class UploadSiteLogPhotoRequest
 {
-    public DateOnly Date { get; set; }
-    public string? Notes { get; set; }
-    public string? Weather { get; set; }
-    public List<IFormFile>? Photos { get; set; }
+    public IFormFile? File { get; set; }
 }

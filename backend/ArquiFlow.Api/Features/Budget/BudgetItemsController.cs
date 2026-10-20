@@ -25,8 +25,19 @@ public class BudgetItemsController(AppDbContext db) : ControllerBase
             .OrderBy(b => b.Category).ThenBy(b => b.Description)
             .Select(b => new BudgetItemDto(
                 b.Id, b.ProjectId, b.Category, b.Description, b.BudgetedAmount, b.Unit, b.Quantity,
-                b.Expenses.Sum(e => (decimal?)e.Amount) ?? 0))
+                b.Expenses.Sum(e => (decimal?)e.Amount) ?? 0,
+                b.Expenses
+                    .OrderByDescending(e => e.Date)
+                    .Select(e => new ExpenseDto(e.Id, e.BudgetItemId, e.Amount, e.Date, e.Description,
+                        e.SupplierId, e.Supplier != null ? e.Supplier.Name : null, e.ReceiptFileUrl))
+                    .ToList()))
             .ToListAsync(ct);
+
+        // Clients see totals per item but never suppliers or receipts.
+        if (User.IsInRole(AppRoles.Client))
+        {
+            items = items.Select(i => i with { Expenses = [] }).ToList();
+        }
 
         return Ok(items);
     }
@@ -43,10 +54,20 @@ public class BudgetItemsController(AppDbContext db) : ControllerBase
             .Where(b => b.ProjectId == projectId && b.Id == id)
             .Select(b => new BudgetItemDto(
                 b.Id, b.ProjectId, b.Category, b.Description, b.BudgetedAmount, b.Unit, b.Quantity,
-                b.Expenses.Sum(e => (decimal?)e.Amount) ?? 0))
+                b.Expenses.Sum(e => (decimal?)e.Amount) ?? 0,
+                b.Expenses
+                    .OrderByDescending(e => e.Date)
+                    .Select(e => new ExpenseDto(e.Id, e.BudgetItemId, e.Amount, e.Date, e.Description,
+                        e.SupplierId, e.Supplier != null ? e.Supplier.Name : null, e.ReceiptFileUrl))
+                    .ToList()))
             .FirstOrDefaultAsync(ct);
 
-        return item is null ? NotFound() : Ok(item);
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(User.IsInRole(AppRoles.Client) ? item with { Expenses = [] } : item);
     }
 
     [HttpPost]
@@ -74,7 +95,7 @@ public class BudgetItemsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync(ct);
 
         var dto = new BudgetItemDto(item.Id, item.ProjectId, item.Category, item.Description,
-            item.BudgetedAmount, item.Unit, item.Quantity, 0);
+            item.BudgetedAmount, item.Unit, item.Quantity, 0, []);
 
         return CreatedAtAction(nameof(GetById), new { projectId, id = item.Id }, dto);
     }
@@ -84,7 +105,7 @@ public class BudgetItemsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<BudgetItemDto>> Update(Guid projectId, Guid id, UpdateBudgetItemRequest request, CancellationToken ct)
     {
         var item = await db.BudgetItems
-            .Include(b => b.Expenses)
+            .Include(b => b.Expenses).ThenInclude(e => e.Supplier)
             .FirstOrDefaultAsync(b => b.ProjectId == projectId && b.Id == id, ct);
 
         if (item is null)
@@ -101,7 +122,12 @@ public class BudgetItemsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync(ct);
 
         var dto = new BudgetItemDto(item.Id, item.ProjectId, item.Category, item.Description,
-            item.BudgetedAmount, item.Unit, item.Quantity, item.Expenses.Sum(e => e.Amount));
+            item.BudgetedAmount, item.Unit, item.Quantity, item.Expenses.Sum(e => e.Amount),
+            item.Expenses
+                .OrderByDescending(e => e.Date)
+                .Select(e => new ExpenseDto(e.Id, e.BudgetItemId, e.Amount, e.Date, e.Description,
+                    e.SupplierId, e.Supplier?.Name, e.ReceiptFileUrl))
+                .ToList());
 
         return Ok(dto);
     }

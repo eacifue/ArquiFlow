@@ -27,6 +27,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         {
             e.Property(p => p.Name).IsRequired().HasMaxLength(200);
             e.Property(p => p.TotalBudget).HasColumnType("numeric(14,2)");
+            e.HasOne(p => p.ProjectManager)
+                .WithMany()
+                .HasForeignKey(p => p.ProjectManagerId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(p => p.Supervisor)
+                .WithMany()
+                .HasForeignKey(p => p.SupervisorId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<BudgetItem>(e =>
@@ -69,6 +77,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithMany()
                 .HasForeignKey(p => p.AuthorUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            e.Property(p => p.CreatedAt).HasDefaultValueSql("now()");
         });
 
         builder.Entity<SiteLogPhoto>(e =>
@@ -86,10 +95,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithMany(p => p.Payments)
                 .HasForeignKey(p => p.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+            // Deleting a supplier keeps its payments, just without a supplier assigned.
             e.HasOne(p => p.Supplier)
                 .WithMany(p => p.Payments)
                 .HasForeignKey(p => p.SupplierId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull);
             e.HasOne(p => p.Expense)
                 .WithMany()
                 .HasForeignKey(p => p.ExpenseId)
@@ -113,6 +123,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasForeignKey(p => p.ClientUserId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(p => new { p.ProjectId, p.ClientUserId }).IsUnique();
+            e.Property(p => p.InvitedAt).HasDefaultValueSql("now()");
         });
     }
 }

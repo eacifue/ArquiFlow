@@ -13,8 +13,8 @@ public class Payment
     public Guid ProjectId { get; set; }
     public Project Project { get; set; } = null!;
 
-    public Guid SupplierId { get; set; }
-    public Supplier Supplier { get; set; } = null!;
+    public Guid? SupplierId { get; set; }
+    public Supplier? Supplier { get; set; }
 
     public Guid? ExpenseId { get; set; }
     public Expense? Expense { get; set; }

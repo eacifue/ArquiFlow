@@ -5,4 +5,5 @@ namespace ArquiFlow.Api.Data.Entities;
 public class ApplicationUser : IdentityUser<Guid>
 {
     public string FullName { get; set; } = string.Empty;
+    public DateTime? LastLoginAt { get; set; }
 }

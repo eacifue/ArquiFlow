@@ -2,6 +2,7 @@ using ArquiFlow.Api.Common;
 using ArquiFlow.Api.Data;
 using ArquiFlow.Api.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,32 +11,53 @@ namespace ArquiFlow.Api.Features.Projects;
 [ApiController]
 [Route("api/projects")]
 [Authorize]
-public class ProjectsController(AppDbContext db) : ControllerBase
+public class ProjectsController(
+    AppDbContext db,
+    ProjectMetricsService metricsService,
+    UserManager<ApplicationUser> userManager) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<ProjectDto>>> GetAll(CancellationToken ct)
     {
-        var query = ScopeToCaller(db.Projects.AsQueryable());
-
-        var projects = await query
+        var projects = await ScopeToCaller(db.Projects.AsQueryable())
             .OrderBy(p => p.Name)
-            .Select(p => new ProjectDto(p.Id, p.Name, p.Address, p.Description, p.StartDate, p.EndDate, p.Status, p.TotalBudget))
+            .Select(p => new ProjectRow(
+                p.Id, p.Name, p.Address, p.Description, p.StartDate, p.EndDate, p.Status, p.TotalBudget,
+                p.ProjectManager == null ? null : new PersonRef(p.ProjectManager.Id, p.ProjectManager.FullName),
+                p.Supervisor == null ? null : new PersonRef(p.Supervisor.Id, p.Supervisor.FullName)))
             .ToListAsync(ct);
 
-        return Ok(projects);
+        var metrics = await metricsService.ComputeAsync(projects.Select(p => p.Id).ToList(), ct);
+
+        return Ok(projects.Select(p => p.ToDto(metrics[p.Id])).ToList());
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProjectDto>> GetById(Guid id, CancellationToken ct)
     {
-        var query = ScopeToCaller(db.Projects.AsQueryable());
+        var project = await LoadRowAsync(ScopeToCaller(db.Projects.AsQueryable()), id, ct);
+        if (project is null)
+        {
+            return NotFound();
+        }
 
-        var project = await query
-            .Where(p => p.Id == id)
-            .Select(p => new ProjectDto(p.Id, p.Name, p.Address, p.Description, p.StartDate, p.EndDate, p.Status, p.TotalBudget))
-            .FirstOrDefaultAsync(ct);
+        var metrics = await metricsService.ComputeAsync(id, ct);
+        return Ok(project.ToDto(metrics));
+    }
 
-        return project is null ? NotFound() : Ok(project);
+    // People who can be assigned as a project's PM or supervisor in the project form.
+    [HttpGet("staff")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ProjectManager}")]
+    public async Task<ActionResult<List<StaffMemberDto>>> GetStaff(CancellationToken ct)
+    {
+        var staff = new List<StaffMemberDto>();
+        foreach (var role in new[] { AppRoles.Admin, AppRoles.ProjectManager, AppRoles.Supervisor })
+        {
+            var users = await userManager.GetUsersInRoleAsync(role);
+            staff.AddRange(users.Select(u => new StaffMemberDto(u.Id, u.FullName, role)));
+        }
+
+        return Ok(staff.OrderBy(s => s.FullName).ToList());
     }
 
     [HttpPost]
@@ -51,16 +73,18 @@ public class ProjectsController(AppDbContext db) : ControllerBase
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             TotalBudget = request.TotalBudget,
+            ProjectManagerId = request.ProjectManagerId,
+            SupervisorId = request.SupervisorId,
             Status = ProjectStatus.Planning
         };
 
         db.Projects.Add(project);
         await db.SaveChangesAsync(ct);
 
-        var dto = new ProjectDto(project.Id, project.Name, project.Address, project.Description,
-            project.StartDate, project.EndDate, project.Status, project.TotalBudget);
+        var row = await LoadRowAsync(db.Projects, project.Id, ct);
+        var metrics = await metricsService.ComputeAsync(project.Id, ct);
 
-        return CreatedAtAction(nameof(GetById), new { id = project.Id }, dto);
+        return CreatedAtAction(nameof(GetById), new { id = project.Id }, row!.ToDto(metrics));
     }
 
     [HttpPut("{id:guid}")]
@@ -80,13 +104,15 @@ public class ProjectsController(AppDbContext db) : ControllerBase
         project.EndDate = request.EndDate;
         project.TotalBudget = request.TotalBudget;
         project.Status = request.Status;
+        project.ProjectManagerId = request.ProjectManagerId;
+        project.SupervisorId = request.SupervisorId;
 
         await db.SaveChangesAsync(ct);
 
-        var dto = new ProjectDto(project.Id, project.Name, project.Address, project.Description,
-            project.StartDate, project.EndDate, project.Status, project.TotalBudget);
+        var row = await LoadRowAsync(db.Projects, id, ct);
+        var metrics = await metricsService.ComputeAsync(id, ct);
 
-        return Ok(dto);
+        return Ok(row!.ToDto(metrics));
     }
 
     [HttpDelete("{id:guid}")]
@@ -105,6 +131,15 @@ public class ProjectsController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
+    private static Task<ProjectRow?> LoadRowAsync(IQueryable<Project> query, Guid id, CancellationToken ct) =>
+        query
+            .Where(p => p.Id == id)
+            .Select(p => new ProjectRow(
+                p.Id, p.Name, p.Address, p.Description, p.StartDate, p.EndDate, p.Status, p.TotalBudget,
+                p.ProjectManager == null ? null : new PersonRef(p.ProjectManager.Id, p.ProjectManager.FullName),
+                p.Supervisor == null ? null : new PersonRef(p.Supervisor.Id, p.Supervisor.FullName)))
+            .FirstOrDefaultAsync(ct);
+
     // Client-role users only see the projects they've been explicitly granted access to.
     // Internal roles (Admin/ProjectManager/Supervisor) see everything (single-tenant app).
     private IQueryable<Project> ScopeToCaller(IQueryable<Project> query)
@@ -116,5 +151,21 @@ public class ProjectsController(AppDbContext db) : ControllerBase
 
         var userId = User.GetUserId();
         return query.Where(p => p.ClientAccesses.Any(a => a.ClientUserId == userId));
+    }
+
+    private record ProjectRow(
+        Guid Id,
+        string Name,
+        string? Address,
+        string? Description,
+        DateOnly? StartDate,
+        DateOnly? EndDate,
+        ProjectStatus Status,
+        decimal TotalBudget,
+        PersonRef? ProjectManager,
+        PersonRef? Supervisor)
+    {
+        public ProjectDto ToDto(ProjectMetrics metrics) =>
+            new(Id, Name, Address, Description, StartDate, EndDate, Status, TotalBudget, ProjectManager, Supervisor, metrics);
     }
 }

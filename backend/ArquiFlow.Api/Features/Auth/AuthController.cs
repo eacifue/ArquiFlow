@@ -9,7 +9,8 @@ namespace ArquiFlow.Api.Features.Auth;
 [Route("api/auth")]
 public class AuthController(
     UserManager<ApplicationUser> userManager,
-    JwtTokenService tokenService) : ControllerBase
+    JwtTokenService tokenService,
+    IConfiguration configuration) : ControllerBase
 {
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
@@ -20,9 +21,13 @@ public class AuthController(
             return Unauthorized();
         }
 
+        user.LastLoginAt = DateTime.UtcNow;
+        await userManager.UpdateAsync(user);
+
         var roles = await userManager.GetRolesAsync(user);
         var token = tokenService.GenerateToken(user, roles);
+        var studioName = configuration["Studio:Name"] ?? string.Empty;
 
-        return Ok(new LoginResponse(token, user.Email!, user.FullName, roles));
+        return Ok(new LoginResponse(token, user.Id, user.Email!, user.FullName, roles, studioName));
     }
 }
