@@ -17,6 +17,7 @@ QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddScoped<ProjectMetricsService>();
 
 // R2 (Cloudflare) storage kicks in only when configured; local dev with
 // docker-compose keeps using disk storage unchanged.
@@ -38,6 +39,8 @@ builder.Services
     .AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     {
         options.Password.RequiredLength = 8;
+        // Initial passwords are generated as "obra-sauces-4821" and handed to the user verbally.
+        options.Password.RequireUppercase = false;
         options.User.RequireUniqueEmail = true;
     })
     .AddEntityFrameworkStores<AppDbContext>()

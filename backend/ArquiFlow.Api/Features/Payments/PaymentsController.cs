@@ -20,7 +20,8 @@ public class PaymentsController(AppDbContext db) : ControllerBase
         var payments = await db.Payments
             .Where(p => p.ProjectId == projectId)
             .OrderByDescending(p => p.Date)
-            .Select(p => new PaymentDto(p.Id, p.ProjectId, p.SupplierId, p.Supplier.Name, p.ExpenseId, p.Amount, p.Date, p.Method, p.Status))
+            .Select(p => new PaymentDto(p.Id, p.ProjectId, p.SupplierId, p.Supplier != null ? p.Supplier.Name : null,
+                p.ExpenseId, p.Expense != null ? p.Expense.Description : null, p.Amount, p.Date, p.Method, p.Status))
             .ToListAsync(ct);
 
         return Ok(payments);
@@ -41,14 +42,19 @@ public class PaymentsController(AppDbContext db) : ControllerBase
             return BadRequest("Proveedor inválido.");
         }
 
+        string? expenseDescription = null;
         if (request.ExpenseId is not null)
         {
-            var expenseBelongsToProject = await db.Expenses
-                .AnyAsync(e => e.Id == request.ExpenseId && e.BudgetItem.ProjectId == projectId, ct);
-            if (!expenseBelongsToProject)
+            var expense = await db.Expenses
+                .Where(e => e.Id == request.ExpenseId && e.BudgetItem.ProjectId == projectId)
+                .Select(e => new { e.Description })
+                .FirstOrDefaultAsync(ct);
+            if (expense is null)
             {
                 return BadRequest("El gasto seleccionado no pertenece a esta obra.");
             }
+
+            expenseDescription = expense.Description;
         }
 
         var payment = new Payment
@@ -66,7 +72,8 @@ public class PaymentsController(AppDbContext db) : ControllerBase
         db.Payments.Add(payment);
         await db.SaveChangesAsync(ct);
 
-        var dto = new PaymentDto(payment.Id, payment.ProjectId, payment.SupplierId, supplier.Name, payment.ExpenseId, payment.Amount, payment.Date, payment.Method, payment.Status);
+        var dto = new PaymentDto(payment.Id, payment.ProjectId, payment.SupplierId, supplier.Name, payment.ExpenseId,
+            expenseDescription, payment.Amount, payment.Date, payment.Method, payment.Status);
         return CreatedAtAction(nameof(GetAll), new { projectId }, dto);
     }
 
@@ -75,6 +82,7 @@ public class PaymentsController(AppDbContext db) : ControllerBase
     {
         var payment = await db.Payments
             .Include(p => p.Supplier)
+            .Include(p => p.Expense)
             .FirstOrDefaultAsync(p => p.ProjectId == projectId && p.Id == id, ct);
 
         if (payment is null)
@@ -85,7 +93,8 @@ public class PaymentsController(AppDbContext db) : ControllerBase
         payment.Status = request.Status;
         await db.SaveChangesAsync(ct);
 
-        var dto = new PaymentDto(payment.Id, payment.ProjectId, payment.SupplierId, payment.Supplier.Name, payment.ExpenseId, payment.Amount, payment.Date, payment.Method, payment.Status);
+        var dto = new PaymentDto(payment.Id, payment.ProjectId, payment.SupplierId, payment.Supplier?.Name, payment.ExpenseId,
+            payment.Expense?.Description, payment.Amount, payment.Date, payment.Method, payment.Status);
         return Ok(dto);
     }
 

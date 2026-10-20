@@ -10,3 +10,6 @@ backend/ArquiFlow.Api/uploads/
 .claude/
 .agents/
 skills-lock.json
+
+# Referencia de diseño (export de Claude Design), no forma parte de la app
+Pantallas/

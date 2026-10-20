@@ -21,4 +21,7 @@ public class LocalFileStorageService : IFileStorageService
 
         return $"{PublicBasePath}/{safeName}";
     }
+
+    public bool IsStoredFileUrl(string url) =>
+        url.StartsWith($"{PublicBasePath}/", StringComparison.Ordinal) && !url.Contains("..");
 }

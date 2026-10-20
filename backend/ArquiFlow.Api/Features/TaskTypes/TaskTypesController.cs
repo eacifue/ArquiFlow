@@ -20,7 +20,8 @@ public class TaskTypesController(AppDbContext db) : ControllerBase
     {
         var taskTypes = await db.TaskTypes
             .OrderBy(t => t.Name)
-            .Select(t => new TaskTypeDto(t.Id, t.Name))
+            .Select(t => new TaskTypeDto(t.Id, t.Name,
+                db.ScheduleTasks.Where(s => s.Name == t.Name).Select(s => s.ProjectId).Distinct().Count()))
             .ToListAsync(ct);
 
         return Ok(taskTypes);
@@ -41,7 +42,7 @@ public class TaskTypesController(AppDbContext db) : ControllerBase
         db.TaskTypes.Add(taskType);
         await db.SaveChangesAsync(ct);
 
-        return CreatedAtAction(nameof(GetAll), new TaskTypeDto(taskType.Id, taskType.Name));
+        return CreatedAtAction(nameof(GetAll), new TaskTypeDto(taskType.Id, taskType.Name, 0));
     }
 
     [HttpPut("{id:guid}")]
@@ -60,10 +61,22 @@ public class TaskTypesController(AppDbContext db) : ControllerBase
             return Conflict("Ya existe una tarea con ese nombre.");
         }
 
+        // Schedule tasks store the name, so renaming the type renames it in every project.
+        var oldName = taskType.Name;
+        await db.ScheduleTasks
+            .Where(s => s.Name == oldName)
+            .ExecuteUpdateAsync(u => u.SetProperty(s => s.Name, request.Name), ct);
+
         taskType.Name = request.Name;
         await db.SaveChangesAsync(ct);
 
-        return Ok(new TaskTypeDto(taskType.Id, taskType.Name));
+        var projectCount = await db.ScheduleTasks
+            .Where(s => s.Name == taskType.Name)
+            .Select(s => s.ProjectId)
+            .Distinct()
+            .CountAsync(ct);
+
+        return Ok(new TaskTypeDto(taskType.Id, taskType.Name, projectCount));
     }
 
     [HttpDelete("{id:guid}")]
@@ -74,6 +87,12 @@ public class TaskTypesController(AppDbContext db) : ControllerBase
         if (taskType is null)
         {
             return NotFound();
+        }
+
+        var inUse = await db.ScheduleTasks.AnyAsync(s => s.Name == taskType.Name, ct);
+        if (inUse)
+        {
+            return Conflict("Un tipo en uso no se puede eliminar.");
         }
 
         db.TaskTypes.Remove(taskType);

@@ -70,4 +70,7 @@ public class R2FileStorageService : IFileStorageService
 
         return $"{_publicBaseUrl}/{key}";
     }
+
+    public bool IsStoredFileUrl(string url) =>
+        url.StartsWith($"{_publicBaseUrl}/", StringComparison.Ordinal) && !url.Contains("..");
 }

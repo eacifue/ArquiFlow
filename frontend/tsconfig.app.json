@@ -25,5 +25,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // UI anterior (shadcn/Tailwind), reemplazada por el rediseño de /Pantallas. Ya no se importa.
+  "exclude": ["src/components", "src/features", "src/routes", "src/lib/utils.ts"]
 }

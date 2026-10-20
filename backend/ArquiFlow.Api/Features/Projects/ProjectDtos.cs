@@ -1,6 +1,9 @@
+using ArquiFlow.Api.Common;
 using ArquiFlow.Api.Data.Entities;
 
 namespace ArquiFlow.Api.Features.Projects;
+
+public record PersonRef(Guid Id, string FullName);
 
 public record ProjectDto(
     Guid Id,
@@ -10,7 +13,12 @@ public record ProjectDto(
     DateOnly? StartDate,
     DateOnly? EndDate,
     ProjectStatus Status,
-    decimal TotalBudget);
+    decimal TotalBudget,
+    PersonRef? ProjectManager,
+    PersonRef? Supervisor,
+    ProjectMetrics Metrics);
+
+public record StaffMemberDto(Guid Id, string FullName, string Role);
 
 public record CreateProjectRequest(
     string Name,
@@ -18,7 +26,9 @@ public record CreateProjectRequest(
     string? Description,
     DateOnly? StartDate,
     DateOnly? EndDate,
-    decimal TotalBudget);
+    decimal TotalBudget,
+    Guid? ProjectManagerId,
+    Guid? SupervisorId);
 
 public record UpdateProjectRequest(
     string Name,
@@ -27,4 +37,6 @@ public record UpdateProjectRequest(
     DateOnly? StartDate,
     DateOnly? EndDate,
     decimal TotalBudget,
-    ProjectStatus Status);
+    ProjectStatus Status,
+    Guid? ProjectManagerId,
+    Guid? SupervisorId);

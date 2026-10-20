@@ -17,7 +17,8 @@ public class ProjectClientsController(AppDbContext db, UserManager<ApplicationUs
     {
         var clients = await db.ProjectClientAccesses
             .Where(a => a.ProjectId == projectId)
-            .Select(a => new ProjectClientDto(a.ClientUser.Id, a.ClientUser.Email!, a.ClientUser.FullName))
+            .OrderBy(a => a.InvitedAt)
+            .Select(a => new ProjectClientDto(a.ClientUser.Id, a.ClientUser.Email!, a.ClientUser.FullName, a.InvitedAt, a.ClientUser.LastLoginAt))
             .ToListAsync(ct);
 
         return Ok(clients);
@@ -60,21 +61,23 @@ public class ProjectClientsController(AppDbContext db, UserManager<ApplicationUs
             return BadRequest("Ese email ya pertenece a un usuario interno.");
         }
 
-        var alreadyLinked = await db.ProjectClientAccesses
-            .AnyAsync(a => a.ProjectId == projectId && a.ClientUserId == user.Id, ct);
+        var access = await db.ProjectClientAccesses
+            .FirstOrDefaultAsync(a => a.ProjectId == projectId && a.ClientUserId == user.Id, ct);
 
-        if (!alreadyLinked)
+        if (access is null)
         {
-            db.ProjectClientAccesses.Add(new ProjectClientAccess
+            access = new ProjectClientAccess
             {
                 Id = Guid.NewGuid(),
                 ProjectId = projectId,
-                ClientUserId = user.Id
-            });
+                ClientUserId = user.Id,
+                InvitedAt = DateTime.UtcNow
+            };
+            db.ProjectClientAccesses.Add(access);
             await db.SaveChangesAsync(ct);
         }
 
-        return Ok(new ProjectClientDto(user.Id, user.Email!, user.FullName));
+        return Ok(new ProjectClientDto(user.Id, user.Email!, user.FullName, access.InvitedAt, user.LastLoginAt));
     }
 
     [HttpDelete("{userId:guid}")]

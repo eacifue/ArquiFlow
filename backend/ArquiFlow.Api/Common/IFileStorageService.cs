@@ -5,4 +5,8 @@ namespace ArquiFlow.Api.Common;
 public interface IFileStorageService
 {
     Task<string> SaveFileAsync(Stream content, string fileName, CancellationToken ct = default);
+
+    // True when the URL points at a file this service stored, so clients can't
+    // attach arbitrary external URLs to records that reference uploaded files.
+    bool IsStoredFileUrl(string url);
 }

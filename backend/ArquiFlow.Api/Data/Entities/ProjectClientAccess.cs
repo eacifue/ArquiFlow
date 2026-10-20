@@ -10,4 +10,5 @@ public class ProjectClientAccess
 
     public Guid ClientUserId { get; set; }
     public ApplicationUser ClientUser { get; set; } = null!;
+    public DateTime InvitedAt { get; set; } = DateTime.UtcNow;
 }

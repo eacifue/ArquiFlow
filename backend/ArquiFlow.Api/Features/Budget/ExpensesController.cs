@@ -13,6 +13,7 @@ namespace ArquiFlow.Api.Features.Budget;
 public class ExpensesController(AppDbContext db, IFileStorageService fileStorage) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ProjectManager},{AppRoles.Supervisor}")]
     public async Task<ActionResult<List<ExpenseDto>>> GetAll(Guid budgetItemId, CancellationToken ct)
     {
         if (!await HasAccessAsync(budgetItemId, ct))
@@ -23,7 +24,8 @@ public class ExpensesController(AppDbContext db, IFileStorageService fileStorage
         var expenses = await db.Expenses
             .Where(e => e.BudgetItemId == budgetItemId)
             .OrderByDescending(e => e.Date)
-            .Select(e => new ExpenseDto(e.Id, e.BudgetItemId, e.Amount, e.Date, e.Description, e.ReceiptFileUrl))
+            .Select(e => new ExpenseDto(e.Id, e.BudgetItemId, e.Amount, e.Date, e.Description,
+                e.SupplierId, e.Supplier != null ? e.Supplier.Name : null, e.ReceiptFileUrl))
             .ToListAsync(ct);
 
         return Ok(expenses);
@@ -42,6 +44,19 @@ public class ExpensesController(AppDbContext db, IFileStorageService fileStorage
             return NotFound();
         }
 
+        string? supplierName = null;
+        if (request.SupplierId is not null)
+        {
+            supplierName = await db.Suppliers
+                .Where(s => s.Id == request.SupplierId)
+                .Select(s => s.Name)
+                .FirstOrDefaultAsync(ct);
+            if (supplierName is null)
+            {
+                return BadRequest("Proveedor inválido.");
+            }
+        }
+
         string? receiptUrl = null;
         if (request.Receipt is not null)
         {
@@ -56,13 +71,15 @@ public class ExpensesController(AppDbContext db, IFileStorageService fileStorage
             Amount = request.Amount,
             Date = request.Date,
             Description = request.Description,
+            SupplierId = request.SupplierId,
             ReceiptFileUrl = receiptUrl
         };
 
         db.Expenses.Add(expense);
         await db.SaveChangesAsync(ct);
 
-        var dto = new ExpenseDto(expense.Id, expense.BudgetItemId, expense.Amount, expense.Date, expense.Description, expense.ReceiptFileUrl);
+        var dto = new ExpenseDto(expense.Id, expense.BudgetItemId, expense.Amount, expense.Date, expense.Description,
+            expense.SupplierId, supplierName, expense.ReceiptFileUrl);
 
         return CreatedAtAction(nameof(GetAll), new { budgetItemId }, dto);
     }

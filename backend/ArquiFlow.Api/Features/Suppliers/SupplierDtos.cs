@@ -7,7 +7,10 @@ public record SupplierDto(
     string? Phone,
     string? Email,
     string? TaxId,
-    string? Category);
+    string? Category,
+    decimal PaidTotal,
+    decimal PendingBalance,
+    int ProjectCount);
 
 public record CreateSupplierRequest(
     string Name,

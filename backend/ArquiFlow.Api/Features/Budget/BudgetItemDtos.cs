@@ -8,7 +8,8 @@ public record BudgetItemDto(
     decimal BudgetedAmount,
     string? Unit,
     decimal? Quantity,
-    decimal SpentAmount);
+    decimal SpentAmount,
+    IReadOnlyList<ExpenseDto> Expenses);
 
 public record CreateBudgetItemRequest(
     string Category,

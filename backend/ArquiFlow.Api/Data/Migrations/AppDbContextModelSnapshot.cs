@@ -46,6 +46,9 @@ namespace ArquiFlow.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
@@ -181,7 +184,7 @@ namespace ArquiFlow.Api.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("SupplierId")
+                    b.Property<Guid?>("SupplierId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -215,16 +218,26 @@ namespace ArquiFlow.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid?>("ProjectManagerId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateOnly?>("StartDate")
                         .HasColumnType("date");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("SupervisorId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("TotalBudget")
                         .HasColumnType("numeric(14,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProjectManagerId");
+
+                    b.HasIndex("SupervisorId");
 
                     b.ToTable("Projects");
                 });
@@ -237,6 +250,11 @@ namespace ArquiFlow.Api.Data.Migrations
 
                     b.Property<Guid>("ClientUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("InvitedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid");
@@ -294,6 +312,11 @@ namespace ArquiFlow.Api.Data.Migrations
 
                     b.Property<Guid>("AuthorUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
@@ -563,14 +586,30 @@ namespace ArquiFlow.Api.Data.Migrations
                     b.HasOne("ArquiFlow.Api.Data.Entities.Supplier", "Supplier")
                         .WithMany("Payments")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Expense");
 
                     b.Navigation("Project");
 
                     b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("ArquiFlow.Api.Data.Entities.Project", b =>
+                {
+                    b.HasOne("ArquiFlow.Api.Data.Entities.ApplicationUser", "ProjectManager")
+                        .WithMany()
+                        .HasForeignKey("ProjectManagerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ArquiFlow.Api.Data.Entities.ApplicationUser", "Supervisor")
+                        .WithMany()
+                        .HasForeignKey("SupervisorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ProjectManager");
+
+                    b.Navigation("Supervisor");
                 });
 
             modelBuilder.Entity("ArquiFlow.Api.Data.Entities.ProjectClientAccess", b =>

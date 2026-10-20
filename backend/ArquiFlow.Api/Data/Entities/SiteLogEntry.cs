@@ -13,6 +13,7 @@ public class SiteLogEntry
 
     public Guid AuthorUserId { get; set; }
     public ApplicationUser Author { get; set; } = null!;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<SiteLogPhoto> Photos { get; set; } = new List<SiteLogPhoto>();
 }
